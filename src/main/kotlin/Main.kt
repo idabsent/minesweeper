@@ -3,30 +3,46 @@ package minesweeper
 import kotlin.random.Random
 
 class Field(
-    private val size: Int,
+    size: Int,
     private val mineR: Char,
     private val freeR: Char
 ){
     private val rcCount = 9
 
-    private var field: MutableList<MutableList<Boolean>>
+    private var field = MutableList(rcCount) { MutableList(rcCount) { false } }
 
     private var generated = 0
 
+    private fun borderMinesCount(row: Int, column: Int) : Int {
+        val leftBorder = if (column > 0) { column - 1 } else { column }
+        val rightBorder = if (column < field.first().lastIndex) { column + 1 } else { field.first().lastIndex }
+        val topBorder = if (row > 0) { row - 1 } else { row }
+        val bottomBorder = if (row < field.lastIndex) { row + 1 } else { field.lastIndex }
+
+        var count = 0
+
+        for (lRow in topBorder..bottomBorder) {
+            for (lColumn in leftBorder..rightBorder) {
+                if (lRow == row && lColumn == column) continue
+                if (field[lRow][lColumn]) count++
+            }
+        }
+
+        return count
+    }
     private val representation: String
         get() {
-            return this.field.map {
-                it.map {
-                    if (it) { mineR } else { freeR }
+            return this.field.mapIndexed() { row, columns ->
+                columns.mapIndexed { column, value ->
+                    if (value) { mineR } else {
+                        val borderMines = borderMinesCount(row, column)
+                        if (borderMines == 0) { freeR } else { borderMines.toString() }
+                    }
                 }.joinToString("")
             }.joinToString("\n")
         }
 
     init {
-        field = MutableList(rcCount) {
-            MutableList(rcCount) { false }
-        }
-
         while (generated < size) {
             val randomRow = Random.nextInt(rcCount)
             val randomColumn = Random.nextInt(rcCount)
@@ -49,7 +65,7 @@ fun main(args: Array<String>) {
 
     val size = readln().toInt()
 
-    val field = Field(5, 'X', '.')
+    val field = Field(size, 'X', '.')
 
     println(field.getField())
 }
